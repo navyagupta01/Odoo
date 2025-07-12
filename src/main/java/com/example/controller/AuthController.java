@@ -1,45 +1,103 @@
+// com.skillswap.controller.AuthController.java
 package com.example.controller;
 
-import com.example.dto.AuthResponse;
-import com.example.dto.LoginRequest;
-import com.example.dto.UserRegistrationRequest;
+import com.example.dto.ApiResponse;
+import com.example.dto.AuthResponseDto;
+import com.example.dto.UserLoginDto;
+import com.example.dto.UserRegistrationDto;
+import com.example.model.User;
+import com.example.security.JwtUtils;
 import com.example.service.UserService;
+import com.example.exception.BadRequestException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "${cors.allowed-origins}")
 public class AuthController {
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private UserService userService;
 
-    /**
-     * Register a new user
-     */
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponseDto>> registerUser(
+            @Valid @RequestPart("user") UserRegistrationDto registrationDto,
+            @RequestPart(value = "photo", required = false) MultipartFile photo) {
         try {
-            AuthResponse response = userService.registerUser(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            userService.validateSkills(registrationDto.getOfferedSkills(), registrationDto.getWantedSkills());
+            if (photo != null && !photo.isEmpty()) {
+                String photoUrl = saveProfilePhoto(photo);
+                registrationDto.setProfilePhoto(photoUrl);
+            }
+            User user = userService.registerUser(registrationDto);
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            registrationDto.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
+            AuthResponseDto authResponse = new AuthResponseDto(jwt, userService.getUserProfile(user.getId()));
+            return ResponseEntity.ok(ApiResponse.success(authResponse, "User registered successfully"));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.failure(e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.failure("Failed to upload photo"));
         }
     }
 
-    /**
-     * Login user
-     */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponseDto>> loginUser(@Valid @RequestBody UserLoginDto loginDto) {
         try {
-            AuthResponse response = userService.login(request);
-            return ResponseEntity.ok(response);
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginDto.getEmailOrUsername(),
+                            loginDto.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
+            User user = userService.findByUsernameOrEmail(loginDto.getEmailOrUsername());
+            AuthResponseDto authResponse = new AuthResponseDto(jwt, userService.getUserProfile(user.getId()));
+            return ResponseEntity.ok(ApiResponse.success(authResponse, "Login successful"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(ApiResponse.failure("Invalid credentials"));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logoutUser() {
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok(ApiResponse.success("User logged out successfully"));
+    }
+
+    private String saveProfilePhoto(MultipartFile photo) throws IOException {
+        String uploadDir = "uploads/profile-photos/";
+        String fileName = UUID.randomUUID().toString() + "_" + photo.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir, fileName);
+        Files.createDirectories(filePath.getParent());
+        Files.write(filePath, photo.getBytes());
+        return "/uploads/profile-photos/" + fileName;
     }
 }

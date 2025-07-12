@@ -1,74 +1,53 @@
+// com.example.model.User.java
 package com.example.model;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
+import jakarta.persistence.Embedded;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "username"),
-        @UniqueConstraint(columnNames = "email")
-})
+import java.util.ArrayList;
+import java.util.List;
+
+@Document(collection = "users")
 public class User {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID user_id;
-
-    @NotBlank
-    @Size(min = 3, max = 50)
-    @Column(unique = true, nullable = false)
+    private String id;
+    private String name;
     private String username;
-
-    @NotBlank
-    @Email
-    @Column(unique = true, nullable = false)
     private String email;
-
-    @NotBlank
-    @Size(min = 6)
-    @Column(nullable = false)
-    private String password; // SHA256 hashed
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime created_at;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updated_at;
-
-    @Column(name = "is_active", nullable = false)
-    private boolean is_active = true;
-
-    @PrePersist
-    protected void onCreate() {
-        created_at = LocalDateTime.now();
-        updated_at = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updated_at = LocalDateTime.now();
-    }
+    private String password;
+    private String location;
+    private String tagline;
+    private boolean isPublic;
+    private List<Skill> offeredSkills = new ArrayList<>();
+    private List<String> wantedSkills = new ArrayList<>();
+    private String profilePhoto;
+    private ProfileStats stats = new ProfileStats();
+    private List<String> roles = new ArrayList<>();
+    private boolean isActive = true;
+    @Embedded
+    private Availability availability;
 
     // Constructors
-    public User() {}
-
-    public User(String username, String email, String password) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
+    public User() {
+        this.roles.add("USER"); // Default role
     }
 
     // Getters and Setters
-    public UUID getUser_id() {
-        return user_id;
+    public String getId() {
+        return id;
     }
 
-    public void setUser_id(UUID id) {
-        this.user_id = id;
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getUsername() {
@@ -95,38 +74,84 @@ public class User {
         this.password = password;
     }
 
-    public LocalDateTime getCreated_at() {
-        return created_at;
+    public String getLocation() {
+        return location;
     }
 
-    public void setCreated_at(LocalDateTime createdAt) {
-        this.created_at = createdAt;
+    public void setLocation(String location) {
+        this.location = location;
     }
 
-    public LocalDateTime getUpdated_at() {
-        return updated_at;
+    public String getTagline() {
+        return tagline;
     }
 
-    public void setUpdated_at(LocalDateTime updatedAt) {
-        this.updated_at = updatedAt;
+    public void setTagline(String tagline) {
+        this.tagline = tagline;
     }
 
-    public boolean isIs_active() {
-        return is_active;
+    public boolean isPublic() {
+        return isPublic;
     }
 
-    public void setIs_active(boolean is_active) {
-        this.is_active = is_active;
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + user_id +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", createdAt=" + created_at +
-                ", isActive=" + is_active +
-                '}';
+    public List<Skill> getOfferedSkills() {
+        return offeredSkills;
+    }
+
+    public void setOfferedSkills(List<Skill> offeredSkills) {
+        this.offeredSkills = offeredSkills;
+    }
+
+    public List<String> getWantedSkills() {
+        return wantedSkills;
+    }
+
+    public void setWantedSkills(List<String> wantedSkills) {
+        this.wantedSkills = wantedSkills;
+    }
+    public Availability getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(Availability availability) {
+        this.availability = availability;
+    }
+
+
+
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
+    }
+
+    public ProfileStats getStats() {
+        return stats;
+    }
+
+    public void setStats(ProfileStats stats) {
+        this.stats = stats;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }
