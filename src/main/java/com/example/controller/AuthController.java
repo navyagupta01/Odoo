@@ -1,4 +1,3 @@
-// com.skillswap.controller.AuthController.java
 package com.example.controller;
 
 import com.example.dto.ApiResponse;
@@ -17,13 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,17 +31,13 @@ public class AuthController {
     @Autowired
     private JwtUtils jwtUtils;
 
+    // ✅ Register with JSON (no file upload required)
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponseDto>> registerUser(
-            @Valid @RequestPart("user") UserRegistrationDto registrationDto,
-            @RequestPart(value = "photo", required = false) MultipartFile photo) {
+            @Valid @RequestBody UserRegistrationDto registrationDto) {
         try {
-            userService.validateSkills(registrationDto.getOfferedSkills(), registrationDto.getWantedSkills());
-            if (photo != null && !photo.isEmpty()) {
-                String photoUrl = saveProfilePhoto(photo);
-                registrationDto.setProfilePhoto(photoUrl);
-            }
             User user = userService.registerUser(registrationDto);
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             user.getUsername(),
@@ -58,12 +46,12 @@ public class AuthController {
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtUtils.generateJwtToken(authentication);
+
             AuthResponseDto authResponse = new AuthResponseDto(jwt, userService.getUserProfile(user.getId()));
             return ResponseEntity.ok(ApiResponse.success(authResponse, "User registered successfully"));
+
         } catch (BadRequestException e) {
             return ResponseEntity.badRequest().body(ApiResponse.failure(e.getMessage()));
-        } catch (IOException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.failure("Failed to upload photo"));
         }
     }
 
@@ -90,14 +78,5 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> logoutUser() {
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok(ApiResponse.success("User logged out successfully"));
-    }
-
-    private String saveProfilePhoto(MultipartFile photo) throws IOException {
-        String uploadDir = "uploads/profile-photos/";
-        String fileName = UUID.randomUUID().toString() + "_" + photo.getOriginalFilename();
-        Path filePath = Paths.get(uploadDir, fileName);
-        Files.createDirectories(filePath.getParent());
-        Files.write(filePath, photo.getBytes());
-        return "/uploads/profile-photos/" + fileName;
     }
 }

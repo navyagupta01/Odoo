@@ -1,6 +1,5 @@
 package com.example.dto;
 
-import com.example.model.Availability;
 import com.example.model.ProfileStats;
 import com.example.model.Skill;
 
@@ -17,7 +16,7 @@ public class UserProfileDto {
     private boolean isPublic;
     private List<Skill> offeredSkills;
     private List<String> wantedSkills;
-    private Availability availability;
+    private String availability;
     private ProfileStats stats;
 
     public String getId() { return id; }
@@ -50,8 +49,8 @@ public class UserProfileDto {
     public List<String> getWantedSkills() { return wantedSkills; }
     public void setWantedSkills(List<String> wantedSkills) { this.wantedSkills = wantedSkills; }
 
-    public Availability getAvailability() { return availability; }
-    public void setAvailability(Availability availability) { this.availability = availability; }
+    public String getAvailability() { return availability; }
+    public void setAvailability(String availability) { this.availability = availability; }
 
     public ProfileStats getStats() { return stats; }
     public void setStats(ProfileStats stats) { this.stats = stats; }

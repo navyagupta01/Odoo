@@ -3,7 +3,6 @@ package com.example.dto;
 import jakarta.validation.constraints.*;
 import java.util.List;
 import com.example.model.Skill;
-import com.example.model.Availability;
 
 public class UserRegistrationDto {
 
@@ -29,7 +28,7 @@ public class UserRegistrationDto {
 
     private List<Skill> offeredSkills;
     private List<String> wantedSkills;
-    private Availability availability;
+    private String availability;
 
     // ✅ Newly added field
     private String profilePhoto; // could be a URL, base64, or filename
@@ -63,8 +62,8 @@ public class UserRegistrationDto {
     public List<String> getWantedSkills() { return wantedSkills; }
     public void setWantedSkills(List<String> wantedSkills) { this.wantedSkills = wantedSkills; }
 
-    public Availability getAvailability() { return availability; }
-    public void setAvailability(Availability availability) { this.availability = availability; }
+    public String getAvailability() { return availability; }
+    public void setAvailability(String availability) { this.availability = availability; }
 
     public String getProfilePhoto() { return profilePhoto; }
     public void setProfilePhoto(String profilePhoto) { this.profilePhoto = profilePhoto; }

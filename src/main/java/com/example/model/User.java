@@ -25,8 +25,7 @@ public class User {
     private ProfileStats stats = new ProfileStats();
     private List<String> roles = new ArrayList<>();
     private boolean isActive = true;
-    @Embedded
-    private Availability availability;
+    private String availability;
 
     // Constructors
     public User() {
@@ -113,11 +112,11 @@ public class User {
     public void setWantedSkills(List<String> wantedSkills) {
         this.wantedSkills = wantedSkills;
     }
-    public Availability getAvailability() {
+    public String getAvailability() {
         return availability;
     }
 
-    public void setAvailability(Availability availability) {
+    public void setAvailability(String availability) {
         this.availability = availability;
     }
 
